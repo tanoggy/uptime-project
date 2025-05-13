@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { MonitorService } from './monitor.service';
 import { CreateMonitorDto } from './dto/create-monitor.dto';
 import { UpdateMonitorDto } from './dto/update-monitor.dto';
@@ -13,18 +13,21 @@ export class MonitorController {
   constructor(private readonly monitorService: MonitorService) {}
 
   @Post()
-  create(@Body() createMonitorDto: CreateMonitorDto) {
-    return this.monitorService.create(createMonitorDto);
+  create(@Body() createMonitorDto: CreateMonitorDto, @Req() req: any) {
+    const userId = req.user.userId;
+    return this.monitorService.create(createMonitorDto, userId);
   }
 
   @Get()
-  findAll() {
-    return this.monitorService.findAll();
+  findAll(@Req() req: any) {
+    const userId = req.user.userId;
+    return this.monitorService.findAllByUser(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.monitorService.findOne(id);
+  findOne(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user.userId;
+    return this.monitorService.findOneByUser(id, userId);
   }
 
   @Patch(':id')
