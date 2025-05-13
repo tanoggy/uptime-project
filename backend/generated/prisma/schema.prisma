@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  name          String?
+  monitors      Monitor[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Monitor {
+  id                String             @id @default(uuid())
+  user              User               @relation(fields: [userId], references: [id])
+  userId            String
+  name              String
+  type              MonitorType
+  config            Json
+  isActive          Boolean            @default(true)
+  checkInterval     Int // in seconds
+  checkResults      CheckResult[]
+  notificationSents NotificationSent[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+enum MonitorType {
+  HTTP
+  SSL
+  DOMAIN
+  HEARTBEAT
+  TCP
+  ICMP
+  KEYWORD
+}
+
+model CheckResult {
+  id           String   @id @default(uuid())
+  monitor      Monitor  @relation(fields: [monitorId], references: [id])
+  monitorId    String
+  status       String // e.g., UP, DOWN
+  responseTime Int? // ms, for relevant types
+  details      Json?
+  checkedAt    DateTime @default(now())
+}
+
+model Notification {
+  id        String             @id @default(uuid())
+  user      User               @relation(fields: [userId], references: [id])
+  userId    String
+  type      NotificationType
+  address   String // email, phone, webhook URL, etc.
+  isActive  Boolean            @default(true)
+  sent      NotificationSent[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  SLACK
+  WEBHOOK
+}
+
+model NotificationSent {
+  id             String       @id @default(uuid())
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  notificationId String
+  monitor        Monitor?     @relation(fields: [monitorId], references: [id])
+  monitorId      String?
+  sentAt         DateTime     @default(now())
+  message        String
+}
